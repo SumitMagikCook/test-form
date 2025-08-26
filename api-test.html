@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        button { padding: 10px 20px; margin: 5px; }
+        input { padding: 8px; margin: 5px; width: 400px; }
+    </style>
+</head>
+<body>
+    <h1>API Connection Test</h1>
+    
+    <div>
+        <label>Your Web App URL:</label><br>
+        <input type="text" id="apiUrl" placeholder="Paste your Web App URL here">
+        <button onclick="testConnection()">Test Connection</button>
+    </div>
+    
+    <div id="connectionResult" class="result" style="display: none;"></div>
+    
+    <div>
+        <input type="text" id="username" placeholder="Username" value="Sumit">
+        <input type="password" id="password" placeholder="Password" value="123456">
+        <button onclick="testLogin()">Test Login</button>
+    </div>
+    
+    <div id="loginResult" class="result" style="display: none;"></div>
+    
+    <script>
+        let currentApiUrl = '';
+
+        async function testConnection() {
+            const url = document.getElementById('apiUrl').value.trim();
+            const resultDiv = document.getElementById('connectionResult');
+            
+            if (!url) {
+                resultDiv.innerHTML = 'Please enter your Web App URL';
+                resultDiv.className = 'result error';
+                resultDiv.style.display = 'block';
+                return;
+            }
+            
+            currentApiUrl = url;
+            resultDiv.innerHTML = 'Testing connection...';
+            resultDiv.className = 'result';
+            resultDiv.style.display = 'block';
+            
+            try {
+                console.log('Testing URL:', url);
+                
+                // Test GET request first
+                const response = await fetch(url + '?action=test', {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+                
+                const text = await response.text();
+                console.log('Response text:', text);
+                
+                if (text.includes('API is working') || text.includes('Use POST requests')) {
+                    resultDiv.innerHTML = '✅ Connection successful! API is responding.';
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.innerHTML = '❌ Unexpected response: ' + text;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                console.error('Connection error:', error);
+                resultDiv.innerHTML = '❌ Connection failed: ' + error.message + '<br>Check console for details.';
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testLogin() {
+            if (!currentApiUrl) {
+                alert('Please test connection first');
+                return;
+            }
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('loginResult');
+            
+            resultDiv.innerHTML = 'Testing login...';
+            resultDiv.className = 'result';
+            resultDiv.style.display = 'block';
+            
+            try {
+                console.log('Testing login with:', {username, password});
+                
+                const response = await fetch(currentApiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'authenticate',
+                        username: username,
+                        password: password
+                    }),
+                    mode: 'cors'
+                });
+                
+                console.log('Login response status:', response.status);
+                
+                const result = await response.json();
+                console.log('Login result:', result);
+                
+                if (result.success) {
+                    resultDiv.innerHTML = '✅ Login successful! Your system is working.';
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.innerHTML = '❌ Login failed: ' + result.message;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                resultDiv.innerHTML = '❌ Login test failed: ' + error.message + '<br>Check console for details.';
+                resultDiv.className = 'result error';
+            }
+        }
+    </script>
+</body>
+</html>
